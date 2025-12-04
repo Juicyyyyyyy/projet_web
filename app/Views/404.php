@@ -478,6 +478,8 @@ html, body, .wrapper {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  
+  background-color: var(--color-main);
 }
 
 * {
@@ -489,10 +491,7 @@ html, body, .wrapper {
   
   width: 750px;
   height: 400px;
-  
-  background-color: var(--color-main);
-  background-image: linear-gradient(to left, #072e61, #004880);
-  
+
   overflow: hidden;
 }
 
@@ -614,7 +613,7 @@ html, body, .wrapper {
   width: 150px;
   height: 100%;
   
-  background-image: linear-gradient(to right, rgba(1, 20, 61, 0), rgba(1, 20, 61, 0.8) 65%, rgba(1, 20, 61, 1));
+  background-image: linear-gradient(to right, rgba(0, 72, 128, 0), rgba(0, 72, 128, 0.8) 65%, rgba(0, 72, 128, 1));
 }
 
 .case {
