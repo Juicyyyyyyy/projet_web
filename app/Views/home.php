@@ -1,16 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $title ?></title>
-    <style>
-        body { font-family: sans-serif; text-align: center; padding-top: 50px; }
-        h1 { color: #333; }
-    </style>
-</head>
-<body>
-    <h1><?= $title ?></h1>
-    <p>Your custom MVC framework is working!</p>
-</body>
-</html>
+<?php include __DIR__ . '/components/header.php'; ?>
+
+<h1><?= $title ?></h1>
+<p>Welcome to the application!</p>
+
+<?php if (isset($_SESSION['user_id'])): ?>
+    <p>You are logged in as <strong><?= htmlspecialchars($_SESSION['user_name']) ?></strong>.</p>
+<?php else: ?>
+    <p>Please <a href="/login">login</a> or <a href="/register">register</a>.</p>
+<?php endif; ?>
+
+<?php include __DIR__ . '/components/footer.php'; ?>
