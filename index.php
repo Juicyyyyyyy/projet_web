@@ -14,14 +14,6 @@ $dotenv->load();
 
 $router = new Router();
 
-// Auth Routes
-$router->get('/login', [AuthController::class, 'login']);
-$router->post('/login', [AuthController::class, 'login']);
-$router->get('/register', [AuthController::class, 'register']);
-$router->post('/register', [AuthController::class, 'register']);
-$router->get('/logout', [AuthController::class, 'logout']);
-
-// Home Route
-$router->get('/', [HomeController::class, 'index']);
+require_once __DIR__ . '/routes/web.php';
 
 $router->dispatch($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD']);
