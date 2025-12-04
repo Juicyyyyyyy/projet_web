@@ -6,7 +6,7 @@ abstract class BaseController
 {
     protected string $viewPath = __DIR__ . '/../Views/';
     
-    public function render(string $pageName, array $data = []): string
+    public function render(string $pageName, array $data = []): void
     {
         extract($data);
         
@@ -21,6 +21,6 @@ abstract class BaseController
         
         include $pagePath;
         
-        return ob_get_clean();
+        echo ob_get_clean();
     }
 }
