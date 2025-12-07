@@ -98,12 +98,7 @@ class ApiFootballController extends BaseController
 
         foreach ($teams as $teamData) {
             $teamId = $teamData['team']['id'];
-            // Pagination handling might be needed but for simplicity we fetch page 1
-            // Actually API-Football requires pagination for players usually
-            // Let's try to fetch page 1 for each team. 
-            // Warning: This will make MANY requests (18 teams * pages). 
-            // For now, let's just fetch page 1.
-            
+
             $response = $this->makeRequest('/players', [
                 'team' => $teamId,
                 'season' => $season,
@@ -113,9 +108,6 @@ class ApiFootballController extends BaseController
             if (!empty($response)) {
                 $players = array_merge($players, $response);
             }
-            
-            // Avoid rate limiting
-            usleep(200000); // 200ms
         }
 
         return $players;
