@@ -8,7 +8,7 @@ use App\Models\User;
 
 class AuthController extends BaseController
 {
-    public function login(Request $request)
+    public function login(Request $request): void
     {
         if ($request->method === 'POST') {
             $email = $request->body['email'] ?? '';
@@ -31,7 +31,7 @@ class AuthController extends BaseController
         $this->render('auth/login');
     }
 
-    public function register(Request $request)
+    public function register(Request $request): void
     {
         if ($request->method === 'POST') {
             $name = $request->body['name'] ?? '';
@@ -40,7 +40,7 @@ class AuthController extends BaseController
 
             $userModel = new User();
             if ($userModel->findByEmail($email)) {
-                return $this->render('auth/register', ['error' => 'Email already exists']);
+                $this->render('auth/register', ['error' => 'Email already exists']);
             }
 
             if ($userModel->create($name, $email, $password)) {
