@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use App\Core\Model;
+use App\Core\BaseModel;
 
-class Player extends Model
+class Player extends BaseModel
 {
     public function __construct()
     {

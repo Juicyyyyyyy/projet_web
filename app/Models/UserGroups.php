@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use App\Core\Model;
+use App\Core\BaseModel;
 
-class UserGroups extends Model
+class UserGroups extends BaseModel
 {
     public function __construct()
     {

@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use App\Core\Model;
+use App\Core\BaseModel;
 
-class Group extends Model
+class Group extends BaseModel
 {
     public function __construct()
     {

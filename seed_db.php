@@ -6,7 +6,7 @@ use Dotenv\Dotenv;
 use App\Controllers\ApiFootballController;
 use App\Models\Team;
 use App\Models\Player;
-use App\Models\MatchModel;
+use App\Models\Match;
 
 $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->load();
@@ -16,7 +16,7 @@ echo "Starting seeder...\n";
 $apiController = new ApiFootballController();
 $teamModel = new Team();
 $playerModel = new Player();
-$matchModel = new MatchModel();
+$matchModel = new Match();
 
 // Check for new matches
 $lastMatchDate = $matchModel->getLastMatchDate();

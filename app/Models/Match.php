@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use App\Core\Model;
+use App\Core\BaseModel;
 
-class MatchModel extends Model
+class Match extends BaseModel
 {
     public function __construct()
     {
