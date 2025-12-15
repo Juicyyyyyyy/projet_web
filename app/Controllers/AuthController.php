@@ -20,7 +20,7 @@ class AuthController extends BaseController
             if ($user && password_verify($password, $user->password)) {
                 $_SESSION['user_id'] = $user->id;
                 $_SESSION['user_name'] = $user->name;
-                header('Location: /');
+                header('Location: /mygroups');
                 exit;
             }
 
@@ -48,7 +48,7 @@ class AuthController extends BaseController
                 $user = $userModel->findByEmail($email);
                 $_SESSION['user_id'] = $user->id;
                 $_SESSION['user_name'] = $user->name;
-                
+
                 header('Location: /');
                 exit;
             }
