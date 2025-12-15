@@ -6,7 +6,10 @@ use Dotenv\Dotenv;
 use App\Controllers\ApiFootballController;
 use App\Models\Team;
 use App\Models\Player;
-use App\Models\Match;
+use App\Models\Match as FootballMatch;
+use App\Models\User;
+use App\Models\Group;
+use App\Models\UserGroups;
 
 $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->load();
@@ -16,7 +19,10 @@ echo "Starting seeder...\n";
 $apiController = new ApiFootballController();
 $teamModel = new Team();
 $playerModel = new Player();
-$matchModel = new Match();
+$matchModel = new FootballMatch();
+$userModel = new User();
+$groupModel = new Group();
+$userGroupsModel = new UserGroups();
 
 // Check for new matches
 $lastMatchDate = $matchModel->getLastMatchDate();
@@ -102,6 +108,67 @@ foreach ($players as $playerData) {
         'photo' => $player['photo'],
         'team_id' => $statistics['team']['id']
     ]);
+}
+
+// 4. Seed Users
+echo "Seeding Users...\n";
+$usersToSeed = [
+    ['name' => 'Admin User', 'email' => 'admin@example.com', 'password' => 'password123'],
+    ['name' => 'John Doe', 'email' => 'john@example.com', 'password' => 'password123'],
+    ['name' => 'Jane Doe', 'email' => 'jane@example.com', 'password' => 'password123'],
+];
+
+foreach ($usersToSeed as $userData) {
+    if (!$userModel->findByEmail($userData['email'])) {
+        echo "Creating User: " . $userData['name'] . "\n";
+        $userModel->create($userData['name'], $userData['email'], $userData['password']);
+    } else {
+        echo "User already exists: " . $userData['name'] . "\n";
+    }
+}
+
+// 5. Seed Groups
+echo "Seeding Groups...\n";
+$adminUser = $userModel->findByEmail('admin@example.com');
+$johnUser = $userModel->findByEmail('john@example.com');
+
+if ($adminUser && $johnUser) {
+    $groupsToSeed = [
+        ['id' => 1, 'name' => 'General Group', 'owner_id' => $adminUser->id],
+        ['id' => 2, 'name' => 'Football Fans', 'owner_id' => $johnUser->id],
+    ];
+
+    foreach ($groupsToSeed as $groupData) {
+        echo "Saving Group: " . $groupData['name'] . "\n";
+        $groupModel->createOrUpdate($groupData);
+    }
+
+    // 6. Seed UserGroups
+    echo "Seeding UserGroups...\n";
+    $janeUser = $userModel->findByEmail('jane@example.com');
+    
+    $memberships = [
+        ['group_id' => 1, 'user_id' => $johnUser->id],
+        ['group_id' => 1, 'user_id' => $janeUser->id],
+        ['group_id' => 2, 'user_id' => $johnUser->id],
+    ];
+
+    foreach ($memberships as $membership) {
+        // Check if user is already in group
+        $existingUsers = $userGroupsModel->getGroupUsers($membership['group_id']);
+        $alreadyMember = false;
+        foreach ($existingUsers as $member) {
+            if ($member->user_id == $membership['user_id']) {
+                $alreadyMember = true;
+                break;
+            }
+        }
+        
+        if (!$alreadyMember) {
+            echo "Adding User " . $membership['user_id'] . " to Group " . $membership['group_id'] . "\n";
+            $userGroupsModel->addUserToGroup($membership['group_id'], $membership['user_id']);
+        }
+    }
 }
 
 echo "Seeding completed.\n";
