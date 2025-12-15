@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS group_matches (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    group_id INT NOT NULL,
+    match_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE,
+    FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_group_match (group_id, match_id)
+);
