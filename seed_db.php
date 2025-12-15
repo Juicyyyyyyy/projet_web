@@ -6,7 +6,7 @@ use Dotenv\Dotenv;
 use App\Controllers\ApiFootballController;
 use App\Models\Team;
 use App\Models\Player;
-use App\Models\Match as FootballMatch;
+use App\Models\FootballMatch;
 use App\Models\User;
 use App\Models\Group;
 use App\Models\UserGroups;
