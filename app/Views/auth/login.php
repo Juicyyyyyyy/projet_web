@@ -3,7 +3,6 @@
 <div class="auth-wrapper">
     <div class="auth-card">
         <div class="auth-header">
-            <!-- Logo - Assuming the path is correct or will be fixed -->
             <img src="/public/images/logo_ballon.png" alt="Logo" class="auth-logo" onerror="this.style.display='none'">
 
             <h1 class="auth-title">Ligue 1 Pronostics</h1>

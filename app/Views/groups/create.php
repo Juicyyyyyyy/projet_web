@@ -12,7 +12,7 @@
                 <input type="text" id="name" name="name" placeholder="Les Champions de la Ligue 1" required>
             </div>
 
-            <!-- Description field skipped as per user request -->
+        
 
             <div class="info-box">
                 <div class="info-title">ℹ️ Informations:</div>

@@ -42,19 +42,14 @@ class GroupController extends BaseController
             $name = $request->body['name'] ?? '';
 
             if (empty($name)) {
-                // In a real app we would pass errors back to the view
+          
                 $this->render('groups/create', ['error' => 'Name is required']);
                 return;
             }
 
             $groupModel = new Group();
-            // We need a way to generate ID or let DB handle it. User's Group model uses manual ID in createOrUpdate. 
-            // I should verify if I can generate a random ID or if DB is auto-increment.
-            // Looking at the seed_db.php, it passes IDs from API. 
-            // For user created groups, let's generate a random int ID for now to be safe with the existing model, or assuming auto-increment if configured.
-            // Let's attempt to use a random ID to fit the existing createOrUpdate method signature if schema isn't known.
-            // Actually, best practice is to let DB handle AI, but the model forces ID.
-            // Let's generate a random ID.
+           
+           
             $newId = random_int(100000, 999999);
 
             $groupModel->createOrUpdate([
@@ -63,7 +58,6 @@ class GroupController extends BaseController
                 'owner_id' => $_SESSION['user_id']
             ]);
 
-            // Add owner to the group
             $userGroup = new UserGroups();
             $userGroup->addUserToGroup($newId, $_SESSION['user_id']);
 

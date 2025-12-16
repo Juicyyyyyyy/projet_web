@@ -19,7 +19,6 @@
         <?php endforeach; ?>
     <?php endif; ?>
 
-    <!-- Create Group Card -->
     <a href="/groups/create" class="group-card create-card">
         <div class="plus-icon">+</div>
         <div>Créer un groupe</div>
