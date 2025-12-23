@@ -29,13 +29,6 @@ class UserGroups extends BaseModel
         ]);
     }
 
-    public function getUserGroups(int $userId): array
-    {
-        $stmt = $this->db->prepare("SELECT * FROM {$this->tableName} WHERE user_id = :user_id");
-        $stmt->execute(['user_id' => $userId]);
-        return $stmt->fetchAll(\PDO::FETCH_OBJ);
-    }
-
     public function getGroupUsers(int $groupId): array
     {
         $stmt = $this->db->prepare("
