@@ -609,7 +609,7 @@
                                     </div>
                                     <div class="input-col">
                                         <label class="mc-label">Différence de buts <span>(optionnel)</span></label>
-                                        <input type="number" name="goal_difference" min="1" class="goal-diff-input" placeholder="ex: 2"
+                                        <input type="number" name="goal_difference" min="0" class="goal-diff-input" placeholder="ex: 0"
                                             value="<?= $hasBet ? $bet->goal_difference : '' ?>">
                                     </div>
                                 </div>
