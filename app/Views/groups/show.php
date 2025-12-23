@@ -321,7 +321,125 @@
         border-radius: 6px;
     }
 
-    
+    /* Leaderboard */
+    .leaderboard-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .leaderboard-item:last-child { border-bottom: none; }
+    .leaderboard-item.current-user {
+        background: #f0f7ff;
+        margin: 0 -1rem;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+    }
+    .leaderboard-rank {
+        width: 24px;
+        height: 24px;
+        background: #e2e8f0;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.8rem;
+        margin-right: 0.5rem;
+        color: #334155;
+    }
+    .leaderboard-item:nth-child(1) .leaderboard-rank { background: #ffd700; color: #000; }
+    .leaderboard-item:nth-child(2) .leaderboard-rank { background: #c0c0c0; color: #000; }
+    .leaderboard-item:nth-child(3) .leaderboard-rank { background: #cd7f32; color: #fff; }
+    .leaderboard-info { flex: 1; margin-left: 0.5rem; }
+    .leaderboard-stats { font-size: 0.75rem; color: #94a3b8; }
+    .leaderboard-points {
+        font-weight: 700;
+        color: #003366;
+        font-size: 1rem;
+    }
+
+    /* Match terminé */
+    .match-finished {
+        border-left: 4px solid #10b981;
+    }
+    .match-result {
+        text-align: center;
+        padding: 1rem;
+        background: #f0fdf4;
+        border-radius: 8px;
+        margin: 1rem 0;
+    }
+    .match-result-score {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #065f46;
+    }
+    .match-result-label {
+        font-size: 0.8rem;
+        color: #059669;
+        margin-bottom: 0.25rem;
+    }
+    .bet-result {
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+    .bet-result-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    .bet-result-label { font-size: 0.85rem; color: #64748b; }
+    .bet-result-points {
+        font-weight: 700;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+    }
+    .points-high { background: #dcfce7; color: #166534; }
+    .points-medium { background: #fef3c7; color: #92400e; }
+    .points-low { background: #fee2e2; color: #991b1b; }
+    .bet-result-score {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #0f172a;
+    }
+
+    /* Détails du pronostic */
+    .bet-details {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    .bet-detail-item {
+        flex: 1;
+        min-width: 100px;
+        background: white;
+        padding: 0.75rem;
+        border-radius: 8px;
+        text-align: center;
+    }
+    .bet-detail-label {
+        display: block;
+        font-size: 0.75rem;
+        color: #64748b;
+        margin-bottom: 0.25rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .bet-detail-value {
+        display: block;
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+    .bet-detail-value.correct {
+        color: #059669;
+    }
+    .bet-detail-value.incorrect {
+        color: #dc2626;
+    }
 </style>
 
 <div class="group-container">
@@ -355,90 +473,190 @@
                                     <p style="text-align: center; color: #94a3b8;">Aucun match pour le moment.</p>
                                 </div>
             <?php else: ?>
-                                <?php foreach ($matches as $match): ?>
-                                                    <?php
-                                                    $bet = $userBets[$match->id] ?? null;
-                                                    $hasBet = !empty($bet);
-                                                    ?>
-                                                    <div class="match-card-new">
-                                                        <div class="mc-header">
-                                                            <div class="mc-date"><?= date('d F Y', strtotime($match->date)) ?></div>
-                                                            <div class="mc-time"><?= date('H:i', strtotime($match->date)) ?></div>
-                                                        </div>
+                <?php foreach ($matches as $match): ?>
+                    <?php
+                    $bet = $userBets[$match->id] ?? null;
+                    $hasBet = !empty($bet);
+                    $isFinished = ($match->status === 'FT');
+                    ?>
+                    <div class="match-card-new <?= $isFinished ? 'match-finished' : '' ?>">
+                        <div class="mc-header">
+                            <div class="mc-date"><?= date('d F Y', strtotime($match->date)) ?></div>
+                            <div class="mc-time"><?= date('H:i', strtotime($match->date)) ?></div>
+                        </div>
 
-                                                        <div class="mc-teams">
-                                                            <div class="mc-team-name"><?= $match->home_team_name ?></div>
-                                                            <div class="mc-vs">VS</div>
-                                                            <div class="mc-team-name"><?= $match->away_team_name ?></div>
-                                                        </div>
+                        <div class="mc-teams">
+                            <div class="mc-team-name"><?= $match->home_team_name ?></div>
+                            <div class="mc-vs">VS</div>
+                            <div class="mc-team-name"><?= $match->away_team_name ?></div>
+                        </div>
 
-                                                        <form class="bet-submit-form" data-match-id="<?= $match->id ?>">
-                                                            <input type="hidden" name="group_id" value="<?= $group->id ?>">
-                                                            <input type="hidden" name="match_id" value="<?= $match->id ?>">
-                                                            <input type="hidden" name="home_team_id" value="<?= $match->home_team_id ?>">
-                                                            <input type="hidden" name="away_team_id" value="<?= $match->away_team_id ?>">
+                        <?php if ($isFinished): ?>
+                            <!-- Match terminé - Afficher le résultat -->
+                            <div class="match-result">
+                                <div class="match-result-label">Résultat final</div>
+                                <div class="match-result-score">
+                                    <?= $match->home_score ?> - <?= $match->away_score ?>
+                                </div>
+                            </div>
 
-                                                            <!-- Prediction 1N2 -->
-                                                            <div class="mc-label">Résultat prédit *</div>
-                                                            <div class="prediction-options">
-                                                                <div class="prediction-option">
-                                                                    <input type="radio" name="prediction" value="home" required 
-                                                                        <?= ($hasBet && $bet->winner_team_id == $match->home_team_id) ? 'checked' : '' ?>>
-                                                                    <div class="prediction-btn">Victoire <?= $match->home_team_name ?></div>
-                                                                </div>
-                                                                <div class="prediction-option">
-                                                                    <input type="radio" name="prediction" value="draw" required
-                                                                        <?= ($hasBet && $bet->winner_team_id === null && ($bet->home_score !== null || $bet->goal_difference !== null)) ? 'checked' : '' ?>>
-                                                                    <div class="prediction-btn">Match nul</div>
-                                                                </div>
-                                                                <div class="prediction-option">
-                                                                    <input type="radio" name="prediction" value="away" required
-                                                                        <?= ($hasBet && $bet->winner_team_id == $match->away_team_id) ? 'checked' : '' ?>>
-                                                                    <div class="prediction-btn">Victoire <?= $match->away_team_name ?></div>
-                                                                </div>
-                                                            </div>
+                            <?php if ($hasBet): ?>
+                                <div class="bet-result">
+                                    <div class="bet-result-header">
+                                        <span class="bet-result-label">Votre pronostic</span>
+                                        <?php
+                                        $points = $bet->points ?? 0;
+                                        $pointsClass = $points >= 7 ? 'points-high' : ($points >= 4 ? 'points-medium' : 'points-low');
+                                        ?>
+                                        <span class="bet-result-points <?= $pointsClass ?>">+<?= $points ?> pts</span>
+                                    </div>
 
-                                                            <div class="inputs-row">
-                                                                <!-- Score Exact -->
-                                                                <div class="input-col">
-                                                                    <label class="mc-label">Score exact <span>(optionnel)</span></label>
-                                                                    <div class="score-inputs">
-                                                                        <input type="number" name="home_score" min="0" placeholder="0" 
-                                                                            value="<?= $hasBet ? $bet->home_score : '' ?>">
-                                                                        <span class="score-sep">-</span>
-                                                                        <input type="number" name="away_score" min="0" placeholder="0"
-                                                                            value="<?= $hasBet ? $bet->away_score : '' ?>">
-                                                                    </div>
-                                                                </div>
+                                    <div class="bet-details">
+                                        <!-- Vainqueur prédit -->
+                                        <div class="bet-detail-item">
+                                            <span class="bet-detail-label">Vainqueur</span>
+                                            <?php
+                                            $predictedWinner = 'Match nul';
+                                            $winnerIcon = '🤝';
+                                            if (!empty($bet->winner_team_id)) {
+                                                if ($bet->winner_team_id == $match->home_team_id) {
+                                                    $predictedWinner = $match->home_team_name;
+                                                    $winnerIcon = '🏠';
+                                                } elseif ($bet->winner_team_id == $match->away_team_id) {
+                                                    $predictedWinner = $match->away_team_name;
+                                                    $winnerIcon = '✈️';
+                                                }
+                                            }
+                                            // Vérifier si c'est correct
+                                            $realWinner = $match->home_score > $match->away_score ? 'home' : ($match->home_score < $match->away_score ? 'away' : 'draw');
+                                            $betWinner = empty($bet->winner_team_id) ? 'draw' : ($bet->winner_team_id == $match->home_team_id ? 'home' : 'away');
+                                            $winnerCorrect = ($realWinner === $betWinner);
+                                            ?>
+                                            <span class="bet-detail-value <?= $winnerCorrect ? 'correct' : 'incorrect' ?>">
+                                                <?= $winnerIcon ?> <?= $predictedWinner ?>
+                                            </span>
+                                        </div>
 
-                                                                <!-- Goal Diff -->
-                                                                <div class="input-col">
-                                                                     <label class="mc-label">Différence de buts <span>(optionnel)</span></label>
-                                                                     <input type="number" name="goal_difference" min="1" class="goal-diff-input" placeholder="ex: 2"
-                                                                        value="<?= $hasBet ? $bet->goal_difference : '' ?>">
-                                                                </div>
-                                                            </div>
+                                        <!-- Score prédit -->
+                                        <div class="bet-detail-item">
+                                            <span class="bet-detail-label">Score</span>
+                                            <?php
+                                            $scoreCorrect = ($bet->home_score == $match->home_score && $bet->away_score == $match->away_score);
+                                            ?>
+                                            <span class="bet-detail-value <?= $scoreCorrect ? 'correct' : 'incorrect' ?>">
+                                                <?= $bet->home_score ?> - <?= $bet->away_score ?>
+                                            </span>
+                                        </div>
 
-                                                            <button type="submit" class="btn-validate">Valider mon pari</button>
-                                                        </form>
-                                                    </div>
-                                <?php endforeach; ?>
+                                        <!-- Écart de buts prédit -->
+                                        <?php if (!empty($bet->goal_difference) || $bet->goal_difference === 0): ?>
+                                        <div class="bet-detail-item">
+                                            <span class="bet-detail-label">Écart</span>
+                                            <?php
+                                            $realDiff = abs($match->home_score - $match->away_score);
+                                            $diffCorrect = ($bet->goal_difference == $realDiff);
+                                            ?>
+                                            <span class="bet-detail-value <?= $diffCorrect ? 'correct' : 'incorrect' ?>">
+                                                <?= $bet->goal_difference ?> but<?= $bet->goal_difference > 1 ? 's' : '' ?>
+                                            </span>
+                                        </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            <?php else: ?>
+                                <div class="bet-result" style="text-align: center; color: #94a3b8;">
+                                    Vous n'avez pas parié sur ce match
+                                </div>
+                            <?php endif; ?>
+
+                        <?php else: ?>
+                            <!-- Match à venir - Formulaire de pari -->
+                            <form class="bet-submit-form" data-match-id="<?= $match->id ?>">
+                                <input type="hidden" name="group_id" value="<?= $group->id ?>">
+                                <input type="hidden" name="match_id" value="<?= $match->id ?>">
+                                <input type="hidden" name="home_team_id" value="<?= $match->home_team_id ?>">
+                                <input type="hidden" name="away_team_id" value="<?= $match->away_team_id ?>">
+
+                                <div class="mc-label">Résultat prédit *</div>
+                                <div class="prediction-options">
+                                    <div class="prediction-option">
+                                        <input type="radio" name="prediction" value="home" required
+                                            <?= ($hasBet && $bet->winner_team_id == $match->home_team_id) ? 'checked' : '' ?>>
+                                        <div class="prediction-btn">Victoire <?= $match->home_team_name ?></div>
+                                    </div>
+                                    <div class="prediction-option">
+                                        <input type="radio" name="prediction" value="draw" required
+                                            <?= ($hasBet && $bet->winner_team_id === null && ($bet->home_score !== null || $bet->goal_difference !== null)) ? 'checked' : '' ?>>
+                                        <div class="prediction-btn">Match nul</div>
+                                    </div>
+                                    <div class="prediction-option">
+                                        <input type="radio" name="prediction" value="away" required
+                                            <?= ($hasBet && $bet->winner_team_id == $match->away_team_id) ? 'checked' : '' ?>>
+                                        <div class="prediction-btn">Victoire <?= $match->away_team_name ?></div>
+                                    </div>
+                                </div>
+
+                                <div class="inputs-row">
+                                    <div class="input-col">
+                                        <label class="mc-label">Score exact <span>(optionnel)</span></label>
+                                        <div class="score-inputs">
+                                            <input type="number" name="home_score" min="0" placeholder="0"
+                                                value="<?= $hasBet ? $bet->home_score : '' ?>">
+                                            <span class="score-sep">-</span>
+                                            <input type="number" name="away_score" min="0" placeholder="0"
+                                                value="<?= $hasBet ? $bet->away_score : '' ?>">
+                                        </div>
+                                    </div>
+                                    <div class="input-col">
+                                        <label class="mc-label">Différence de buts <span>(optionnel)</span></label>
+                                        <input type="number" name="goal_difference" min="1" class="goal-diff-input" placeholder="ex: 2"
+                                            value="<?= $hasBet ? $bet->goal_difference : '' ?>">
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn-validate">Valider mon pari</button>
+                            </form>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
             <?php endif; ?>
         </div>
 
         <!-- Sidebar -->
         <div class="sidebar">
+            <!-- Classement -->
+            <div class="sidebar-card">
+                <h3 class="sidebar-title">Classement</h3>
+                <?php if (!empty($leaderboard)): ?>
+                    <?php $rank = 1; foreach ($leaderboard as $player): ?>
+                        <div class="leaderboard-item <?= $player->id == $_SESSION['user_id'] ? 'current-user' : '' ?>">
+                            <div class="leaderboard-rank"><?= $rank ?></div>
+                            <div class="avatar-circle">
+                                <?= strtoupper(substr($player->name ?? 'U', 0, 1)) ?>
+                            </div>
+                            <div class="leaderboard-info">
+                                <div class="member-name"><?= htmlspecialchars($player->name ?? 'Inconnu') ?></div>
+                                <div class="leaderboard-stats"><?= $player->total_bets ?> paris</div>
+                            </div>
+                            <div class="leaderboard-points"><?= $player->total_points ?> pts</div>
+                        </div>
+                    <?php $rank++; endforeach; ?>
+                <?php else: ?>
+                    <p style="color: #94a3b8; text-align: center;">Aucun classement</p>
+                <?php endif; ?>
+            </div>
+
             <div class="sidebar-card">
                 <h3 class="sidebar-title">Membres</h3>
                 <?php foreach ($members as $member): ?>
-                                    <div class="member-item">
-                                        <div class="avatar-circle">
-                                            <?= strtoupper(substr($member->user_name ?? 'U', 0, 1)) ?>
-                                        </div>
-                                        <div class="member-info">
-                                            <div class="member-name"><?= htmlspecialchars($member->user_name ?? 'Inconnu') ?></div>
-                                        </div>
-                                    </div>
+                    <div class="member-item">
+                        <div class="avatar-circle">
+                            <?= strtoupper(substr($member->user_name ?? 'U', 0, 1)) ?>
+                        </div>
+                        <div class="member-info">
+                            <div class="member-name"><?= htmlspecialchars($member->user_name ?? 'Inconnu') ?></div>
+                        </div>
+                    </div>
                 <?php endforeach; ?>
             </div>
 
