@@ -38,7 +38,12 @@ class UserGroups extends BaseModel
 
     public function getGroupUsers(int $groupId): array
     {
-        $stmt = $this->db->prepare("SELECT * FROM {$this->tableName} WHERE group_id = :group_id");
+        $stmt = $this->db->prepare("
+            SELECT ug.*, u.name as user_name 
+            FROM {$this->tableName} ug
+            JOIN users u ON ug.user_id = u.id
+            WHERE ug.group_id = :group_id
+        ");
         $stmt->execute(['group_id' => $groupId]);
         return $stmt->fetchAll(\PDO::FETCH_OBJ);
     }

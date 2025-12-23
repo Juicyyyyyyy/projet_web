@@ -13,6 +13,41 @@ class GroupController extends BaseController
     public function index(Request $request): void
     {
         if (!isset($_SESSION['user_id'])) {
+            header('Location: /login');
+            exit;
+        }
+
+        $userGroup = new UserGroups();
+        $groups = $userGroup->getGroupsWithDetails($_SESSION['user_id']);
+
+        $this->render('groups/index', ['groups' => $groups]);
+    }
+
+    public function show(Request $request): void
+    {
+        if (!isset($_SESSION['user_id'])) {
+            header('Location: /login');
+            exit;
+        }
+
+        $groupId = (int) ($request->params['id'] ?? 0);
+        $groupModel = new Group();
+
+        if (!$groupModel->isMember($groupId, $_SESSION['user_id'])) {
+            header('Location: /groups');
+            exit;
+        }
+
+        $group = $groupModel->findWithDetails($groupId);
+        $userGroups = new UserGroups();
+        $members = $userGroups->getGroupUsers($groupId);
+
+        $this->render('groups/show', ['group' => $group, 'members' => $members]);
+    }
+
+    public function createApi(Request $request): void
+    {
+        if (!isset($_SESSION['user_id'])) {
             http_response_code(401);
             echo json_encode(['error' => 'Non authentifie']);
             return;
@@ -43,7 +78,7 @@ class GroupController extends BaseController
         }
     }
 
-    public function getMyGroups(Request $request): void
+    public function listApi(Request $request): void
     {
         if (!isset($_SESSION['user_id'])) {
             http_response_code(401);
@@ -58,7 +93,7 @@ class GroupController extends BaseController
         echo json_encode(['success' => true, 'groups' => $groups]);
     }
 
-    public function getGroup(Request $request): void
+    public function getGroupApi(Request $request): void
     {
         if (!isset($_SESSION['user_id'])) {
             http_response_code(401);
@@ -110,7 +145,6 @@ class GroupController extends BaseController
 
             $groupModel = new Group();
 
-
             $newId = random_int(100000, 999999);
 
             $groupModel->createOrUpdate([
@@ -122,7 +156,7 @@ class GroupController extends BaseController
             $userGroup = new UserGroups();
             $userGroup->addUserToGroup($newId, $_SESSION['user_id']);
 
-            header('Location: /mygroups');
+            header('Location: /groups');
             exit;
         }
     }

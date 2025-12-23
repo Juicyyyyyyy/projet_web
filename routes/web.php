@@ -12,27 +12,28 @@ $router->get('/register', [AuthController::class, 'register']);
 $router->post('/register', [AuthController::class, 'register']);
 $router->get('/logout', [AuthController::class, 'logout']);
 
-// Group Routes
-$router->get('/mygroups', [GroupController::class, 'index']);
-$router->get('/groups/create', [GroupController::class, 'create']);
-$router->post('/groups/create', [GroupController::class, 'store']);
-
 // Home Route
 $router->get('/', [HomeController::class, 'index']);
 
-// Group Routes
-$router->get('/groups', [GroupController::class, 'getMyGroups']);
-$router->post('/groups', [GroupController::class, 'createGroup']);
-$router->get('/groups/{id}', [GroupController::class, 'getGroup']);
+// Group Routes (Web)
+$router->get('/groups', [GroupController::class, 'index']);
+$router->get('/groups/create', [GroupController::class, 'create']);
+$router->post('/groups/create', [GroupController::class, 'store']);
+$router->get('/groups/{id}', [GroupController::class, 'show']);
 
-// Group Members Routes (admin only)
-$router->post('/groups/{id}/members', [GroupController::class, 'addUserToGroup']);
-$router->post('/groups/{id}/members/remove', [GroupController::class, 'removeUserFromGroup']);
+// Group Routes (API)
+$router->get('/api/groups', [GroupController::class, 'listApi']);
+$router->post('/api/groups', [GroupController::class, 'createApi']);
+$router->get('/api/groups/{id}', [GroupController::class, 'getGroupApi']);
 
-// Group Matches Routes
-$router->get('/groups/{id}/matches', [GroupController::class, 'getGroupMatches']);
-$router->post('/groups/{id}/matches', [GroupController::class, 'addMatchToGroup']);
-$router->post('/groups/{id}/matches/remove', [GroupController::class, 'removeMatchFromGroup']);
+// Group Members Routes (API - admin only)
+$router->post('/api/groups/{id}/members', [GroupController::class, 'addUserToGroup']);
+$router->post('/api/groups/{id}/members/remove', [GroupController::class, 'removeUserFromGroup']);
+
+// Group Matches Routes (API)
+$router->get('/api/groups/{id}/matches', [GroupController::class, 'getGroupMatches']);
+$router->post('/api/groups/{id}/matches', [GroupController::class, 'addMatchToGroup']);
+$router->post('/api/groups/{id}/matches/remove', [GroupController::class, 'removeMatchFromGroup']);
 
 // Bet Routes
 $router->post('/bets', [BetController::class, 'placeBet']);

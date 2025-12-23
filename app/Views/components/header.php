@@ -243,7 +243,7 @@
 
         <div class="nav-links">
             <a href="/" class="nav-link">Accueil</a>
-            <a href="/mygroups" class="nav-link active-btn">Mes Groupes</a>
+            <a href="/groups" class="nav-link active-btn">Mes Groupes</a>
             <a href="/rankings" class="nav-link">Classements</a>
         </div>
 
