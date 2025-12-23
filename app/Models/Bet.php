@@ -15,11 +15,13 @@ class Bet extends BaseModel
     {
         $stmt = $this->db->prepare("
             INSERT INTO {$this->tableName}
-            (group_id, match_id, user_id, home_score, away_score)
-            VALUES (:group_id, :match_id, :user_id, :home_score, :away_score)
+            (group_id, match_id, user_id, home_score, away_score, winner_team_id, goal_difference)
+            VALUES (:group_id, :match_id, :user_id, :home_score, :away_score, :winner_team_id, :goal_difference)
             ON DUPLICATE KEY UPDATE
-            home_score = :home_score,
-            away_score = :away_score
+            home_score = VALUES(home_score),
+            away_score = VALUES(away_score),
+            winner_team_id = VALUES(winner_team_id),
+            goal_difference = VALUES(goal_difference)
         ");
 
         return $stmt->execute([
@@ -27,7 +29,9 @@ class Bet extends BaseModel
             'match_id' => $data['match_id'],
             'user_id' => $data['user_id'],
             'home_score' => $data['home_score'],
-            'away_score' => $data['away_score']
+            'away_score' => $data['away_score'],
+            'winner_team_id' => $data['winner_team_id'] ?? null,
+            'goal_difference' => $data['goal_difference'] ?? null
         ]);
     }
 
@@ -88,23 +92,46 @@ class Bet extends BaseModel
         return $stmt->fetchAll(\PDO::FETCH_OBJ);
     }
 
-    public function calculatePoints(int $betHome, int $betAway, int $realHome, int $realAway): int
+    public function calculatePoints(int $betHome, int $betAway, int $realHome, int $realAway, ?int $betGoalDiff = null, ?int $betWinnerTeamId = null, ?int $homeTeamId = null, ?int $awayTeamId = null): int
     {
         $points = 0;
 
-        $betWinner = $betHome > $betAway ? 'home' : ($betHome < $betAway ? 'away' : 'draw');
+        // 1 point pour le bon résultat (victoire/nul/défaite)
         $realWinner = $realHome > $realAway ? 'home' : ($realHome < $realAway ? 'away' : 'draw');
+
+        // Utiliser winner_team_id si renseigné, sinon calculer depuis le score
+        if ($betWinnerTeamId !== null && $homeTeamId !== null && $awayTeamId !== null) {
+            if ($betWinnerTeamId == $homeTeamId) {
+                $betWinner = 'home';
+            } elseif ($betWinnerTeamId == $awayTeamId) {
+                $betWinner = 'away';
+            } else {
+                $betWinner = 'draw';
+            }
+        } else {
+            $betWinner = $betHome > $betAway ? 'home' : ($betHome < $betAway ? 'away' : 'draw');
+        }
 
         if ($betWinner === $realWinner) {
             $points += 1;
         }
 
-        $betDiff = $betHome - $betAway;
-        $realDiff = $realHome - $realAway;
-        if ($betDiff === $realDiff) {
-            $points += 3;
+        // 3 points pour la bonne différence de buts
+        $realDiff = abs($realHome - $realAway);
+
+        // Utiliser goal_difference si renseigné, sinon calculer depuis le score
+        if ($betGoalDiff !== null) {
+            if ($betGoalDiff === $realDiff) {
+                $points += 3;
+            }
+        } else {
+            $betDiff = abs($betHome - $betAway);
+            if ($betDiff === $realDiff) {
+                $points += 3;
+            }
         }
 
+        // 5 points pour le score exact
         if ($betHome === $realHome && $betAway === $realAway) {
             $points += 5;
         }
@@ -123,7 +150,7 @@ class Bet extends BaseModel
 
     public function calculatePointsForMatch(int $matchId): void
     {
-        $stmt = $this->db->prepare("SELECT home_score, away_score, status FROM matches WHERE id = :id");
+        $stmt = $this->db->prepare("SELECT home_score, away_score, status, home_team_id, away_team_id FROM matches WHERE id = :id");
         $stmt->execute(['id' => $matchId]);
         $match = $stmt->fetch(\PDO::FETCH_OBJ);
 
@@ -140,7 +167,11 @@ class Bet extends BaseModel
                 $bet->home_score,
                 $bet->away_score,
                 $match->home_score,
-                $match->away_score
+                $match->away_score,
+                $bet->goal_difference,
+                $bet->winner_team_id,
+                $match->home_team_id,
+                $match->away_team_id
             );
             $this->updatePoints($bet->id, $points);
         }

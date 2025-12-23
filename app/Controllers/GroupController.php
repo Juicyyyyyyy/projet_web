@@ -66,13 +66,17 @@ class GroupController extends BaseController
         $existingMatchIds = array_map(fn($m) => $m->id, $matches);
         $availableMatches = array_filter($upcomingMatches, fn($m) => !in_array($m->id, $existingMatchIds));
 
+        // Leaderboard
+        $leaderboard = $betModel->getGroupLeaderboard($groupId);
+
         $this->render('groups/show', [
             'group' => $group,
             'members' => $members,
             'matches' => $matches,
             'userBets' => $userBets,
             'availableMatches' => array_values($availableMatches),
-            'isOwner' => ($group->owner_id == $_SESSION['user_id'])
+            'isOwner' => ($group->owner_id == $_SESSION['user_id']),
+            'leaderboard' => $leaderboard
         ]);
     }
 

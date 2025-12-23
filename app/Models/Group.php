@@ -8,7 +8,7 @@ class Group extends BaseModel
 {
     public function __construct()
     {
-        parent::__construct('groups');
+        parent::__construct('`groups`');
     }
 
     public function createOrUpdate(array $data): bool

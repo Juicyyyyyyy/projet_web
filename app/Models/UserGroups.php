@@ -53,7 +53,7 @@ class UserGroups extends BaseModel
         $sql = "
             SELECT g.id, g.name, g.owner_id, 
             (SELECT COUNT(*) FROM user_groups ug2 WHERE ug2.group_id = g.id) as member_count 
-            FROM groups g 
+            FROM `groups` g
             JOIN {$this->tableName} ug ON g.id = ug.group_id 
             WHERE ug.user_id = :user_id
         ";
