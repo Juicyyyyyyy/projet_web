@@ -50,13 +50,17 @@ class GroupController extends BaseController
         $groupMatchModel = new GroupMatch();
         $matches = $groupMatchModel->getMatchesByGroup($groupId);
 
-        // User Bets
+        // User Bets + Bet Details for finished matches
         $betModel = new Bet();
         $userBets = [];
+        $betDetails = [];
         foreach ($matches as $match) {
             $bet = $betModel->findByUserGroupMatch($_SESSION['user_id'], $groupId, $match->id);
             if ($bet) {
                 $userBets[$match->id] = $bet;
+                if ($match->status === 'FT') {
+                    $betDetails[$match->id] = $betModel->getBetDetails($bet, $match);
+                }
             }
         }
 
@@ -74,6 +78,7 @@ class GroupController extends BaseController
             'members' => $members,
             'matches' => $matches,
             'userBets' => $userBets,
+            'betDetails' => $betDetails,
             'availableMatches' => array_values($availableMatches),
             'isOwner' => ($group->owner_id == $_SESSION['user_id']),
             'leaderboard' => $leaderboard

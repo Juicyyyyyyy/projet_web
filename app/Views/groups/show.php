@@ -501,62 +501,33 @@
                             </div>
 
                             <?php if ($hasBet): ?>
+                                <?php $details = $betDetails[$match->id] ?? null; ?>
                                 <div class="bet-result">
                                     <div class="bet-result-header">
                                         <span class="bet-result-label">Votre pronostic</span>
-                                        <?php
-                                        $points = $bet->points ?? 0;
-                                        $pointsClass = $points >= 7 ? 'points-high' : ($points >= 4 ? 'points-medium' : 'points-low');
-                                        ?>
-                                        <span class="bet-result-points <?= $pointsClass ?>">+<?= $points ?> pts</span>
+                                        <?php $pointsClass = $details['points'] >= 7 ? 'points-high' : ($details['points'] >= 4 ? 'points-medium' : 'points-low'); ?>
+                                        <span class="bet-result-points <?= $pointsClass ?>">+<?= $details['points'] ?> pts</span>
                                     </div>
 
                                     <div class="bet-details">
-                                        <!-- Vainqueur prédit -->
                                         <div class="bet-detail-item">
                                             <span class="bet-detail-label">Vainqueur</span>
-                                            <?php
-                                            $predictedWinner = 'Match nul';
-                                            $winnerIcon = '🤝';
-                                            if (!empty($bet->winner_team_id)) {
-                                                if ($bet->winner_team_id == $match->home_team_id) {
-                                                    $predictedWinner = $match->home_team_name;
-                                                    $winnerIcon = '🏠';
-                                                } elseif ($bet->winner_team_id == $match->away_team_id) {
-                                                    $predictedWinner = $match->away_team_name;
-                                                    $winnerIcon = '✈️';
-                                                }
-                                            }
-                                            // Vérifier si c'est correct
-                                            $realWinner = $match->home_score > $match->away_score ? 'home' : ($match->home_score < $match->away_score ? 'away' : 'draw');
-                                            $betWinner = empty($bet->winner_team_id) ? 'draw' : ($bet->winner_team_id == $match->home_team_id ? 'home' : 'away');
-                                            $winnerCorrect = ($realWinner === $betWinner);
-                                            ?>
-                                            <span class="bet-detail-value <?= $winnerCorrect ? 'correct' : 'incorrect' ?>">
-                                                <?= $winnerIcon ?> <?= $predictedWinner ?>
+                                            <span class="bet-detail-value <?= $details['winner_correct'] ? 'correct' : 'incorrect' ?>">
+                                                <?= $details['winner_icon'] ?> <?= $details['predicted_winner'] ?>
                                             </span>
                                         </div>
 
-                                        <!-- Score prédit -->
                                         <div class="bet-detail-item">
                                             <span class="bet-detail-label">Score</span>
-                                            <?php
-                                            $scoreCorrect = ($bet->home_score == $match->home_score && $bet->away_score == $match->away_score);
-                                            ?>
-                                            <span class="bet-detail-value <?= $scoreCorrect ? 'correct' : 'incorrect' ?>">
+                                            <span class="bet-detail-value <?= $details['score_correct'] ? 'correct' : 'incorrect' ?>">
                                                 <?= $bet->home_score ?> - <?= $bet->away_score ?>
                                             </span>
                                         </div>
 
-                                        <!-- Écart de buts prédit -->
-                                        <?php if (!empty($bet->goal_difference) || $bet->goal_difference === 0): ?>
+                                        <?php if ($bet->goal_difference !== null): ?>
                                         <div class="bet-detail-item">
                                             <span class="bet-detail-label">Écart</span>
-                                            <?php
-                                            $realDiff = abs($match->home_score - $match->away_score);
-                                            $diffCorrect = ($bet->goal_difference == $realDiff);
-                                            ?>
-                                            <span class="bet-detail-value <?= $diffCorrect ? 'correct' : 'incorrect' ?>">
+                                            <span class="bet-detail-value <?= $details['diff_correct'] ? 'correct' : 'incorrect' ?>">
                                                 <?= $bet->goal_difference ?> but<?= $bet->goal_difference > 1 ? 's' : '' ?>
                                             </span>
                                         </div>

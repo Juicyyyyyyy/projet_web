@@ -6,11 +6,19 @@ use App\Core\BaseModel;
 
 class Bet extends BaseModel
 {
+    // Points constants
+    private const POINTS_CORRECT_WINNER = 1;
+    private const POINTS_CORRECT_DIFF = 3;
+    private const POINTS_EXACT_SCORE = 5;
+
     public function __construct()
     {
         parent::__construct('bets');
     }
 
+    /**
+     * Create or update a bet
+     */
     public function createOrUpdate(array $data): bool
     {
         $stmt = $this->db->prepare("
@@ -35,13 +43,14 @@ class Bet extends BaseModel
         ]);
     }
 
+    /**
+     * Find a specific bet by user, group and match
+     */
     public function findByUserGroupMatch(int $userId, int $groupId, int $matchId): ?object
     {
         $stmt = $this->db->prepare("
             SELECT * FROM {$this->tableName}
-            WHERE user_id = :user_id
-            AND group_id = :group_id
-            AND match_id = :match_id
+            WHERE user_id = :user_id AND group_id = :group_id AND match_id = :match_id
         ");
         $stmt->execute([
             'user_id' => $userId,
@@ -52,6 +61,9 @@ class Bet extends BaseModel
         return $result ?: null;
     }
 
+    /**
+     * Get all bets for a user in a group with match details
+     */
     public function findByGroupAndUser(int $groupId, int $userId): array
     {
         $stmt = $this->db->prepare("
@@ -66,91 +78,93 @@ class Bet extends BaseModel
             JOIN matches m ON b.match_id = m.id
             JOIN teams ht ON m.home_team_id = ht.id
             JOIN teams at ON m.away_team_id = at.id
-            WHERE b.group_id = :group_id
-            AND b.user_id = :user_id
+            WHERE b.group_id = :group_id AND b.user_id = :user_id
             ORDER BY m.date ASC
         ");
-        $stmt->execute([
-            'group_id' => $groupId,
-            'user_id' => $userId
-        ]);
+        $stmt->execute(['group_id' => $groupId, 'user_id' => $userId]);
         return $stmt->fetchAll(\PDO::FETCH_OBJ);
     }
 
-    public function findByGroup(int $groupId): array
-    {
-        $stmt = $this->db->prepare("
-            SELECT b.*,
-                   m.home_score as real_home_score,
-                   m.away_score as real_away_score,
-                   m.status as match_status
-            FROM {$this->tableName} b
-            JOIN matches m ON b.match_id = m.id
-            WHERE b.group_id = :group_id
-        ");
-        $stmt->execute(['group_id' => $groupId]);
-        return $stmt->fetchAll(\PDO::FETCH_OBJ);
-    }
-
-    public function calculatePoints(int $betHome, int $betAway, int $realHome, int $realAway, ?int $betGoalDiff = null, ?int $betWinnerTeamId = null, ?int $homeTeamId = null, ?int $awayTeamId = null): int
+    /**
+     * Calculate points for a bet based on match result
+     * Returns: 1pt for correct winner, 3pts for correct goal diff, 5pts for exact score
+     */
+    public function calculatePoints(object $bet, object $match): int
     {
         $points = 0;
 
-        // 1 point pour le bon résultat (victoire/nul/défaite)
-        $realWinner = $realHome > $realAway ? 'home' : ($realHome < $realAway ? 'away' : 'draw');
-
-        // Utiliser winner_team_id si renseigné, sinon calculer depuis le score
-        if ($betWinnerTeamId !== null && $homeTeamId !== null && $awayTeamId !== null) {
-            if ($betWinnerTeamId == $homeTeamId) {
-                $betWinner = 'home';
-            } elseif ($betWinnerTeamId == $awayTeamId) {
-                $betWinner = 'away';
-            } else {
-                $betWinner = 'draw';
-            }
-        } else {
-            $betWinner = $betHome > $betAway ? 'home' : ($betHome < $betAway ? 'away' : 'draw');
+        // Skip if scores are null
+        if ($bet->home_score === null || $bet->away_score === null) {
+            return 0;
         }
+
+        $realWinner = $this->getWinner($match->home_score, $match->away_score);
+        $betWinner = $this->getBetWinner($bet, $match);
 
         if ($betWinner === $realWinner) {
-            $points += 1;
+            $points += self::POINTS_CORRECT_WINNER;
         }
 
-        // 3 points pour la bonne différence de buts
-        $realDiff = abs($realHome - $realAway);
+        // 2. Check goal difference (use goal_difference field if set, otherwise calculate)
+        $realDiff = abs($match->home_score - $match->away_score);
+        $betDiff = ($bet->goal_difference !== null)
+            ? $bet->goal_difference
+            : abs($bet->home_score - $bet->away_score);
 
-        // Utiliser goal_difference si renseigné, sinon calculer depuis le score
-        if ($betGoalDiff !== null) {
-            if ($betGoalDiff === $realDiff) {
-                $points += 3;
-            }
-        } else {
-            $betDiff = abs($betHome - $betAway);
-            if ($betDiff === $realDiff) {
-                $points += 3;
-            }
+        if ($betDiff === $realDiff) {
+            $points += self::POINTS_CORRECT_DIFF;
         }
 
-        // 5 points pour le score exact
-        if ($betHome === $realHome && $betAway === $realAway) {
-            $points += 5;
+        // 3. Check exact score
+        if ($bet->home_score == $match->home_score && $bet->away_score == $match->away_score) {
+            $points += self::POINTS_EXACT_SCORE;
         }
 
         return $points;
     }
 
+    /**
+     * Get winner type from scores: 'home', 'away' or 'draw'
+     */
+    private function getWinner(int $homeScore, int $awayScore): string
+    {
+        if ($homeScore > $awayScore) return 'home';
+        if ($homeScore < $awayScore) return 'away';
+        return 'draw';
+    }
+
+    /**
+     * Get bet winner prediction: 'home', 'away' or 'draw'
+     */
+    private function getBetWinner(object $bet, object $match): string
+    {
+        if ($bet->winner_team_id !== null) {
+            if ($bet->winner_team_id == $match->home_team_id) return 'home';
+            if ($bet->winner_team_id == $match->away_team_id) return 'away';
+            return 'draw';
+        }
+        return $this->getWinner($bet->home_score, $bet->away_score);
+    }
+
+    /**
+     * Update points for a bet
+     */
     public function updatePoints(int $betId, int $points): bool
     {
         $stmt = $this->db->prepare("UPDATE {$this->tableName} SET points = :points WHERE id = :id");
-        return $stmt->execute([
-            'id' => $betId,
-            'points' => $points
-        ]);
+        return $stmt->execute(['id' => $betId, 'points' => $points]);
     }
 
+    /**
+     * Calculate and save points for all bets on a finished match
+     */
     public function calculatePointsForMatch(int $matchId): void
     {
-        $stmt = $this->db->prepare("SELECT home_score, away_score, status, home_team_id, away_team_id FROM matches WHERE id = :id");
+        // Get match with team IDs
+        $stmt = $this->db->prepare("
+            SELECT id, home_score, away_score, status, home_team_id, away_team_id
+            FROM matches WHERE id = :id
+        ");
         $stmt->execute(['id' => $matchId]);
         $match = $stmt->fetch(\PDO::FETCH_OBJ);
 
@@ -158,25 +172,58 @@ class Bet extends BaseModel
             return;
         }
 
-        $stmt = $this->db->prepare("SELECT * FROM {$this->tableName} WHERE match_id = :match_id AND points IS NULL");
+        // Get all bets without points calculated
+        $stmt = $this->db->prepare("
+            SELECT * FROM {$this->tableName}
+            WHERE match_id = :match_id AND points IS NULL
+        ");
         $stmt->execute(['match_id' => $matchId]);
         $bets = $stmt->fetchAll(\PDO::FETCH_OBJ);
 
         foreach ($bets as $bet) {
-            $points = $this->calculatePoints(
-                $bet->home_score,
-                $bet->away_score,
-                $match->home_score,
-                $match->away_score,
-                $bet->goal_difference,
-                $bet->winner_team_id,
-                $match->home_team_id,
-                $match->away_team_id
-            );
+            $points = $this->calculatePoints($bet, $match);
             $this->updatePoints($bet->id, $points);
         }
     }
 
+    /**
+     * Get bet display details (winner name, icons, correct/incorrect status)
+     * Used by the view to display bet results
+     */
+    public function getBetDetails(object $bet, object $match): array
+    {
+        // Predicted winner name and icon
+        $predictedWinner = 'Match nul';
+        $winnerIcon = '🤝';
+
+        if (!empty($bet->winner_team_id)) {
+            if ($bet->winner_team_id == $match->home_team_id) {
+                $predictedWinner = $match->home_team_name;
+                $winnerIcon = '🏠';
+            } elseif ($bet->winner_team_id == $match->away_team_id) {
+                $predictedWinner = $match->away_team_name;
+                $winnerIcon = '✈️';
+            }
+        }
+
+        // Check if predictions are correct
+        $realWinner = $this->getWinner($match->home_score, $match->away_score);
+        $betWinner = $this->getBetWinner($bet, $match);
+        $realDiff = abs($match->home_score - $match->away_score);
+
+        return [
+            'predicted_winner' => $predictedWinner,
+            'winner_icon' => $winnerIcon,
+            'winner_correct' => ($betWinner === $realWinner),
+            'score_correct' => ($bet->home_score == $match->home_score && $bet->away_score == $match->away_score),
+            'diff_correct' => ($bet->goal_difference !== null && $bet->goal_difference == $realDiff),
+            'points' => $bet->points ?? 0
+        ];
+    }
+
+    /**
+     * Get leaderboard for a group (all members with their total points)
+     */
     public function getGroupLeaderboard(int $groupId): array
     {
         $stmt = $this->db->prepare("
@@ -184,16 +231,12 @@ class Bet extends BaseModel
                    COALESCE(SUM(b.points), 0) as total_points,
                    COUNT(b.id) as total_bets
             FROM users u
-            JOIN user_groups ug ON u.id = ug.user_id
+            JOIN user_groups ug ON u.id = ug.user_id AND ug.group_id = :group_id
             LEFT JOIN {$this->tableName} b ON u.id = b.user_id AND b.group_id = :group_id
-            WHERE ug.group_id = :group_id2
             GROUP BY u.id, u.name
             ORDER BY total_points DESC
         ");
-        $stmt->execute([
-            'group_id' => $groupId,
-            'group_id2' => $groupId
-        ]);
+        $stmt->execute(['group_id' => $groupId]);
         return $stmt->fetchAll(\PDO::FETCH_OBJ);
     }
 }
