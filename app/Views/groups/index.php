@@ -23,6 +23,11 @@
         <div class="plus-icon">+</div>
         <div>Créer un groupe</div>
     </a>
+
+    <a href="/groups/join" class="group-card create-card">
+        <div class="plus-icon">+</div>
+        <div>Rejoindre un groupe</div>
+    </a>
 </div>
 
 <style>

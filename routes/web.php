@@ -19,6 +19,8 @@ $router->get('/', [HomeController::class, 'index']);
 $router->get('/groups', [GroupController::class, 'index']);
 $router->get('/groups/create', [GroupController::class, 'create']);
 $router->post('/groups/create', [GroupController::class, 'store']);
+$router->get('/groups/join', [GroupController::class, 'join']);
+$router->post('/groups/join', [GroupController::class, 'joinStore']);
 $router->get('/groups/{id}', [GroupController::class, 'show']);
 $router->get('/groups/{id}/add-match', [GroupController::class, 'addMatchView']);
 

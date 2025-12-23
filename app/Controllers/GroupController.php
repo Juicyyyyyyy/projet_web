@@ -213,14 +213,16 @@ class GroupController extends BaseController
             $name = $request->body['name'] ?? '';
 
             if (empty($name)) {
-
                 $this->render('groups/create', ['error' => 'Name is required']);
                 return;
             }
 
             $groupModel = new Group();
 
-            $newId = random_int(100000, 999999);
+            // unique code
+            do {
+                $newId = random_int(100000, 999999);
+            } while ($groupModel->findById($newId));
 
             $groupModel->createOrUpdate([
                 'id' => $newId,
@@ -236,6 +238,63 @@ class GroupController extends BaseController
         }
     }
 
+    /**
+     * Show join group form
+     */
+    public function join(): void
+    {
+        if (!isset($_SESSION['user_id'])) {
+            header('Location: /login');
+            exit;
+        }
+        $this->render('groups/join');
+    }
+
+    /**
+     * Handle join group form submission
+     */
+    public function joinStore(Request $request): void
+    {
+        if (!isset($_SESSION['user_id'])) {
+            header('Location: /login');
+            exit;
+        }
+
+        if ($request->method !== 'POST') {
+            header('Location: /groups/join');
+            exit;
+        }
+
+        $code = strtoupper(trim($request->body['code'] ?? ''));
+
+        if (!preg_match('/^GROUPE(\d+)$/', $code, $matches)) {
+            $this->render('groups/join', ['error' => 'Code invalide. Format attendu: GROUPE123456']);
+            return;
+        }
+
+        $groupId = (int) $matches[1];
+
+        $groupModel = new Group();
+        $group = $groupModel->findById($groupId);
+
+        if (!$group) {
+            $this->render('groups/join', ['error' => 'Groupe non trouvé']);
+            return;
+        }
+
+        // Check if already member
+        if ($groupModel->isMember($groupId, $_SESSION['user_id'])) {
+            $this->render('groups/join', ['error' => 'Vous êtes déjà membre de ce groupe']);
+            return;
+        }
+
+        // Add user to group
+        $userGroup = new UserGroups();
+        $userGroup->addUserToGroup($groupId, $_SESSION['user_id']);
+
+        header('Location: /groups/' . $groupId);
+        exit;
+    }
 
     public function addUserToGroup(Request $request): void
     {
