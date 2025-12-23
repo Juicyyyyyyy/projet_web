@@ -7,6 +7,8 @@ use App\Core\Request;
 use App\Models\Group;
 use App\Models\UserGroups;
 use App\Models\GroupMatch;
+use App\Models\Bet;
+use App\Models\FootballMatch;
 
 class GroupController extends BaseController
 {
@@ -39,10 +41,74 @@ class GroupController extends BaseController
         }
 
         $group = $groupModel->findWithDetails($groupId);
+
+        // Members (Simple list)
         $userGroups = new UserGroups();
         $members = $userGroups->getGroupUsers($groupId);
 
-        $this->render('groups/show', ['group' => $group, 'members' => $members]);
+        // Matches
+        $groupMatchModel = new GroupMatch();
+        $matches = $groupMatchModel->getMatchesByGroup($groupId);
+
+        // User Bets
+        $betModel = new Bet();
+        $userBets = [];
+        foreach ($matches as $match) {
+            $bet = $betModel->findByUserGroupMatch($_SESSION['user_id'], $groupId, $match->id);
+            if ($bet) {
+                $userBets[$match->id] = $bet;
+            }
+        }
+
+        // Available matches for Modal (Upcoming 30 days)
+        $matchModel = new FootballMatch();
+        $upcomingMatches = $matchModel->findUpcomingWithTeams(30);
+        $existingMatchIds = array_map(fn($m) => $m->id, $matches);
+        $availableMatches = array_filter($upcomingMatches, fn($m) => !in_array($m->id, $existingMatchIds));
+
+        $this->render('groups/show', [
+            'group' => $group,
+            'members' => $members,
+            'matches' => $matches,
+            'userBets' => $userBets,
+            'availableMatches' => array_values($availableMatches),
+            'isOwner' => ($group->owner_id == $_SESSION['user_id'])
+        ]);
+    }
+
+    public function addMatchView(Request $request): void
+    {
+        if (!isset($_SESSION['user_id'])) {
+            header('Location: /login');
+            exit;
+        }
+
+        $groupId = (int) ($request->params['id'] ?? 0);
+        $groupModel = new Group();
+
+        if (!$groupModel->isOwner($groupId, $_SESSION['user_id'])) {
+            header('Location: /groups/' . $groupId);
+            exit;
+        }
+
+        $group = $groupModel->findWithDetails($groupId);
+
+        // Get all matches
+        $matchModel = new FootballMatch();
+        $allMatches = $matchModel->findAllWithTeams();
+
+        // Get existing group matches IDs
+        $groupMatchModel = new GroupMatch();
+        $existingMatches = $groupMatchModel->getMatchesByGroup($groupId);
+        $existingIds = array_map(fn($m) => $m->id, $existingMatches);
+
+        // Filter: only matches NOT in the group
+        $availableMatches = array_filter($allMatches, fn($m) => !in_array($m->id, $existingIds));
+
+        // Sort by date (optional, assuming findAll is not sorted or we want specific sort)
+        usort($availableMatches, fn($a, $b) => strcmp($a->date, $b->date));
+
+        $this->render('groups/add_match', ['group' => $group, 'matches' => $availableMatches]);
     }
 
     public function createApi(Request $request): void

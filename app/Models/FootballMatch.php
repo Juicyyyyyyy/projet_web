@@ -32,4 +32,38 @@ class FootballMatch extends BaseModel
         $stmt = $this->db->query("SELECT date FROM {$this->tableName} ORDER BY date DESC LIMIT 1");
         return $stmt->fetchColumn();
     }
+
+    public function findAllWithTeams(): array
+    {
+        $query = "
+            SELECT m.*, 
+                   ht.name as home_team_name, 
+                   at.name as away_team_name
+            FROM {$this->tableName} m
+            LEFT JOIN teams ht ON m.home_team_id = ht.id
+            LEFT JOIN teams at ON m.away_team_id = at.id
+            ORDER BY m.date ASC
+        ";
+        $stmt = $this->db->query($query);
+        return $stmt->fetchAll(\PDO::FETCH_OBJ);
+    }
+
+    public function findUpcomingWithTeams(int $days = 7): array
+    {
+        $query = "
+            SELECT m.*, 
+                   ht.name as home_team_name, 
+                   at.name as away_team_name
+            FROM {$this->tableName} m
+            LEFT JOIN teams ht ON m.home_team_id = ht.id
+            LEFT JOIN teams at ON m.away_team_id = at.id
+            WHERE m.date >= CURDATE() 
+            AND m.date <= DATE_ADD(CURDATE(), INTERVAL :days DAY)
+            ORDER BY m.date ASC
+        ";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindValue(':days', $days, \PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(\PDO::FETCH_OBJ);
+    }
 }

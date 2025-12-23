@@ -12,9 +12,17 @@ class Request
 
     public function __construct()
     {
-        $this->body = $_POST;
-        $this->query = $_GET;
         $this->method = $_SERVER['REQUEST_METHOD'];
         $this->uri = $_SERVER['REQUEST_URI'];
+        $this->query = $_GET;
+
+        // Handle JSON Input
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+        if (strpos($contentType, 'application/json') !== false) {
+            $json = file_get_contents('php://input');
+            $this->body = json_decode($json, true) ?? [];
+        } else {
+            $this->body = $_POST;
+        }
     }
 }

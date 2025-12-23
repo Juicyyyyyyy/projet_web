@@ -20,6 +20,7 @@ $router->get('/groups', [GroupController::class, 'index']);
 $router->get('/groups/create', [GroupController::class, 'create']);
 $router->post('/groups/create', [GroupController::class, 'store']);
 $router->get('/groups/{id}', [GroupController::class, 'show']);
+$router->get('/groups/{id}/add-match', [GroupController::class, 'addMatchView']);
 
 // Group Routes (API)
 $router->get('/api/groups', [GroupController::class, 'listApi']);

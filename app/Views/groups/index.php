@@ -14,7 +14,7 @@
                     <span class="icon">👥</span>
                     <?= $group->member_count ?> membres
                 </div>
-                <a href="/groups/view?id=<?= $group->id ?>" class="btn-view">Voir</a>
+                <a href="/groups/<?= $group->id ?>" class="btn-view">Voir</a>
             </div>
         <?php endforeach; ?>
     <?php endif; ?>

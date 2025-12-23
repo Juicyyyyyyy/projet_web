@@ -25,10 +25,18 @@ class BetController extends BaseController
         }
 
         $userId = $_SESSION['user_id'];
-        $groupId = (int)$request->body['group_id'] ?? 0;
-        $matchId = (int)$request->body['match_id'] ?? 0;
-        $homeScore = (int)$request->body['home_score'] ?? 0;
-        $awayScore = (int)$request->body['away_score'] ?? 0;
+        $groupId = (int) $request->body['group_id'] ?? 0;
+        $matchId = (int) $request->body['match_id'] ?? 0;
+
+        // New inputs
+        $prediction = $request->body['prediction'] ?? ''; // 'home', 'draw', 'away'
+        $homeScore = isset($request->body['home_score']) && $request->body['home_score'] !== '' ? (int) $request->body['home_score'] : null;
+        $awayScore = isset($request->body['away_score']) && $request->body['away_score'] !== '' ? (int) $request->body['away_score'] : null;
+        $goalDiff = isset($request->body['goal_difference']) && $request->body['goal_difference'] !== '' ? (int) $request->body['goal_difference'] : null;
+
+        // Metadata for determining winner ID
+        $homeTeamId = (int) ($request->body['home_team_id'] ?? 0);
+        $awayTeamId = (int) ($request->body['away_team_id'] ?? 0);
 
         if ($groupId <= 0 || $matchId <= 0) {
             http_response_code(400);
@@ -36,7 +44,15 @@ class BetController extends BaseController
             return;
         }
 
-        if ($homeScore < 0 || $awayScore < 0) {
+        // Validate Prediction (allow empty if user just wants to reset or bet on nothing)
+        if ($prediction !== '' && !in_array($prediction, ['home', 'draw', 'away'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Prédiction invalide (victoire ou nul requis)']);
+            return;
+        }
+
+        // Validate Optional Scores (if provided)
+        if (($homeScore !== null && $homeScore < 0) || ($awayScore !== null && $awayScore < 0)) {
             http_response_code(400);
             echo json_encode(['error' => 'Scores invalides']);
             return;
@@ -56,13 +72,23 @@ class BetController extends BaseController
             return;
         }
 
+        // Determine winner_team_id
+        $winnerTeamId = null;
+        if ($prediction === 'home')
+            $winnerTeamId = $homeTeamId;
+        elseif ($prediction === 'away')
+            $winnerTeamId = $awayTeamId;
+        // if draw, winnerTeamId remains null
+
         $bet = new Bet();
         $result = $bet->createOrUpdate([
             'group_id' => $groupId,
             'match_id' => $matchId,
             'user_id' => $userId,
             'home_score' => $homeScore,
-            'away_score' => $awayScore
+            'away_score' => $awayScore,
+            'winner_team_id' => $winnerTeamId,
+            'goal_difference' => $goalDiff
         ]);
 
         if ($result) {
@@ -83,7 +109,7 @@ class BetController extends BaseController
         }
 
         $userId = $_SESSION['user_id'];
-        $groupId = (int)($request->params['id'] ?? 0);
+        $groupId = (int) ($request->params['id'] ?? 0);
 
         if ($groupId <= 0) {
             http_response_code(400);
@@ -114,7 +140,7 @@ class BetController extends BaseController
         }
 
         $userId = $_SESSION['user_id'];
-        $groupId = (int)($request->params['id'] ?? 0);
+        $groupId = (int) ($request->params['id'] ?? 0);
 
         if ($groupId <= 0) {
             http_response_code(400);
@@ -138,7 +164,7 @@ class BetController extends BaseController
 
     public function calculateMatchPoints(Request $request): void
     {
-        $matchId = (int)($request->params['id'] ?? 0);
+        $matchId = (int) ($request->params['id'] ?? 0);
 
         if ($matchId <= 0) {
             http_response_code(400);
