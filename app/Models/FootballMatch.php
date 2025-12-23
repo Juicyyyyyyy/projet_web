@@ -4,7 +4,7 @@ namespace App\Models;
 
 use App\Core\BaseModel;
 
-class Match extends BaseModel
+class FootballMatch extends BaseModel
 {
     public function __construct()
     {
